@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>WenjianXue&#39;s blog</title>
+    <link>http://localhost:1313/</link>
+    <description>Recent content on WenjianXue&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 12 Jun 2019 10:00:00 +0800</lastBuildDate>
+    
+        <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>About</title>
+      <link>http://localhost:1313/about/</link>
+      <pubDate>Wed, 12 Jun 2019 10:00:00 +0800</pubDate>
+      
+      <guid>http://localhost:1313/about/</guid>
+      
+        <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Android FutureTask runner CASed</title>
+      <link>http://localhost:1313/post/android_futuretask_cased/</link>
+      <pubDate>Wed, 12 Jun 2019 09:54:09 +0800</pubDate>
+      
+      <guid>http://localhost:1313/post/android_futuretask_cased/</guid>
+      
+        <description>&lt;p&gt;查看 FutureTask 源代码，发现成员变量 runner，不知道在哪里被赋值，查看源代码&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;  /** The underlying callable; nulled out after running */
+    private Callable&amp;lt;V&amp;gt; callable;
+    /** The result to return or exception to throw from get() */
+    private Object outcome; // non-volatile, protected by state reads/writes
+    /** The thread running the callable; CASed during run() */
+    private volatile Thread runner;
+    /** Treiber stack of waiting threads */
+    private volatile WaitNode waiters;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;不明白 CASed  是什么意思，直到看到 run()函数&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; public void run() {
+        if (state != NEW ||
+            !U.compareAndSwapObject(this, RUNNER, null, Thread.currentThread()))
+            return;
+        try {
+            Callable&amp;lt;V&amp;gt; c = callable;
+            if (c != null &amp;amp;&amp;amp; state == NEW) {
+                V result;
+                boolean ran;
+                try {
+                    result = c.call();
+                    ran = true;
+                } catch (Throwable ex) {
+                    result = null;
+                    ran = false;
+                    setException(ex);
+                }
+                if (ran)
+                    set(result);
+            }
+        } finally {
+            // runner must be non-null until state is settled to
+            // prevent concurrent calls to run()
+            runner = null;
+            // state must be re-read after nulling runner to prevent
+            // leaked interrupts
+            int s = state;
+            if (s &amp;gt;= INTERRUPTING)
+                handlePossibleCancellationInterrupt(s);
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;CASed 是 compareAndSwapObject 的缩写！&lt;/p&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>Android webview input标签 软键盘遮挡问题</title>
+      <link>http://localhost:1313/post/android_webview_input/</link>
+      <pubDate>Wed, 12 Jun 2019 09:52:04 +0800</pubDate>
+      
+      <guid>http://localhost:1313/post/android_webview_input/</guid>
+      
+        <description>
+
+&lt;p&gt;在App中使用Webview中的网页使用了input标签，用于选择文件并且上传；&lt;/p&gt;
+
+&lt;h1 id=&#34;问题&#34;&gt;问题：&lt;/h1&gt;
+
+&lt;p&gt;点击input标签 后软键盘出现，但是整体布局未向上移动，造成软键盘遮挡put标签等。&lt;/p&gt;
+
+&lt;h2 id=&#34;解决方案&#34;&gt;解决方案：&lt;/h2&gt;
+
+&lt;p&gt;参看：&lt;a href=&#34;https://stackoverflow.com/questions/7417123/android-how-to-adjust-layout-in-full-screen-mode-when-softkeyboard-is-visible/19494006#19494006&#34;&gt;stackoverflow 问题&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;简单来说就是使用AndroidBug5497Workaround 类，在onCreate时设置&lt;/p&gt;
+
+&lt;h2 id=&#34;虚拟按键出现问题&#34;&gt;虚拟按键出现问题&lt;/h2&gt;
+
+&lt;p&gt;设备：红米redmi 5 plus&lt;/p&gt;
+
+&lt;p&gt;类似红米5 plus 这样的设备底部可能有虚拟按键，并且加载的网页十分特殊，网页底部有一个pop，如图&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://upload-images.jianshu.io/upload_images/5999704-5581cc34196eab53.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240&#34; alt=&#34;image&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;在使用AndroidBug5497Workaround 出现pop（红框部分）被底部的虚拟键（蓝框部分）遮挡。&lt;/p&gt;
+
+&lt;h2 id=&#34;解决方案-1&#34;&gt;解决方案&lt;/h2&gt;
+
+&lt;p&gt;```/**
+ * 为修复WebView内的input 弹出软键盘导致布局被遮挡引入
+ * &lt;a href=&#34;https://stackoverflow.com/questions/7417123/android-how-to-adjust-layout-in-full-screen-mode-when-softkeyboard-is-visible/19494006#19494006&#34;&gt;https://stackoverflow.com/questions/7417123/android-how-to-adjust-layout-in-full-screen-mode-when-softkeyboard-is-visible/19494006#19494006&lt;/a&gt;
+ */
+public class AndroidBug5497Workaround {
+    // For more information, see &lt;a href=&#34;https://issuetracker.google.com/issues/36911528&#34;&gt;https://issuetracker.google.com/issues/36911528&lt;/a&gt;
+    // To use this class, simply invoke assistActivity() on an Activity that already has its content view set.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public static void assistActivity (Activity activity) {
+    new AndroidBug5497Workaround(activity);
+}
+
+private View mChildOfContent;
+private int usableHeightPrevious;
+private FrameLayout.LayoutParams frameLayoutParams;
+
+private AndroidBug5497Workaround(Activity activity) {
+    FrameLayout content = (FrameLayout) activity.findViewById(android.R.id.content);
+    mChildOfContent = content.getChildAt(0);
+    mChildOfContent.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        public void onGlobalLayout() {
+            possiblyResizeChildOfContent();
+        }
+    });
+    frameLayoutParams = (FrameLayout.LayoutParams) mChildOfContent.getLayoutParams();
+}
+
+private int frameLayoutHeight = 0;
+
+private void possiblyResizeChildOfContent() {
+    int usableHeightNow = computeUsableHeight();
+    if (usableHeightNow != usableHeightPrevious) {
+        int usableHeightSansKeyboard = mChildOfContent.getRootView().getHeight();
+        int heightDifference = usableHeightSansKeyboard - usableHeightNow;
+        if (heightDifference &amp;gt; (usableHeightSansKeyboard/4)) {
+            // keyboard probably just became visible
+            frameLayoutHeight = frameLayoutParams.height;// ！！！修改前保存原有高度
+            frameLayoutParams.height = usableHeightSansKeyboard - heightDifference;
+        } else {
+            // keyboard probably just became hidden
+            if(0 != frameLayoutHeight) {
+                frameLayoutParams.height = frameLayoutHeight;// ！！！收起键盘恢复原有高度
+            }
+        }
+        mChildOfContent.requestLayout();
+        usableHeightPrevious = usableHeightNow;
+    }
+}
+
+private int computeUsableHeight() {
+    Rect r = new Rect();
+    mChildOfContent.getWindowVisibleDisplayFrame(r);
+    return (r.bottom - r.top);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}```&lt;/p&gt;
+</description>
+      
+    </item>
+    
+  </channel>
+</rss>

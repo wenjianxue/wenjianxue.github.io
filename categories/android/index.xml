@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Android on WenjianXue&#39;s blog</title>
+    <link>http://localhost:1313/categories/android/</link>
+    <description>Recent content in Android on WenjianXue&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 12 Jun 2019 09:54:09 +0800</lastBuildDate>
+    
+	<atom:link href="http://localhost:1313/categories/android/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Android FutureTask runner CASed</title>
+      <link>http://localhost:1313/post/android_futuretask_cased/</link>
+      <pubDate>Wed, 12 Jun 2019 09:54:09 +0800</pubDate>
+      
+      <guid>http://localhost:1313/post/android_futuretask_cased/</guid>
+      <description>查看 FutureTask 源代码，发现成员变量 runner，不知道在哪里被赋值，查看源代码 /** The underlying callable; nulled out after running */ private Callable&amp;lt;V&amp;gt; callable; /** The result to return or exception to throw from get() */ private Object outcome; // non-volatile, protected by state reads/writes /** The</description>
+    </item>
+    
+    <item>
+      <title>Android webview input标签 软键盘遮挡问题</title>
+      <link>http://localhost:1313/post/android_webview_input/</link>
+      <pubDate>Wed, 12 Jun 2019 09:52:04 +0800</pubDate>
+      
+      <guid>http://localhost:1313/post/android_webview_input/</guid>
+      <description>在App中使用Webview中的网页使用了input标签，用于选择文件并且上传； 问题： 点击input标签 后软键盘出现，但是整体布局未向上移动</description>
+    </item>
+    
+  </channel>
+</rss>
